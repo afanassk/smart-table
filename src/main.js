@@ -6,11 +6,12 @@ import {data as sourceData} from "./data/dataset_1.js";
 import {initData} from "./data.js";
 import {processFormData} from "./lib/utils.js";
 
+// @todo: подключение
 import {initTable} from "./components/table.js";
 import {initPagination} from './components/pagination.js';
-import {initSorting} from "./components/sorting.js";
+import {initSearching} from "./components/searching.js";
 import {initFiltering} from "./components/filtering.js";
-// @todo: подключение
+import {initSorting} from "./components/sorting.js";
 
 // Исходные данные используемые в render()
 const {data, ...indexes} = initData(sourceData);
@@ -40,9 +41,10 @@ function render(action) {
     let state = collectState();     // состояние полей из таблицы
     let result = [...data];         // копируем для последующего изменения
     // @todo: использование
-    result = applyPagination(result, state, action);
-    result = applySorting(result, state, action);
-    result = applyFiltering(result, state, action);
+    result = applySearching(result, state, action);  // поиск
+    result = applyFiltering(result, state, action);  // фильтры
+    result = applySorting(result, state, action);    // сортировка
+    result = applyPagination(result, state, action); // пагинация
 
     sampleTable.render(result)
 }
@@ -50,9 +52,12 @@ function render(action) {
 const sampleTable = initTable({
     tableTemplate: 'table',
     rowTemplate: 'row',
-    before: ['header', 'filter'],
+    before: ['search', 'header', 'filter'],
     after: ['pagination']
 }, render);
+
+// @todo: инициализация поиска
+const applySearching = initSearching('search');         // имя поля поиска в state
 
 // @todo: инициализация пагинации
 const applyPagination = initPagination(
@@ -67,16 +72,16 @@ const applyPagination = initPagination(
     }
 );
 
+// @todo: инициализация фильтрации
+const applyFiltering = initFiltering(sampleTable.filter.elements, {    // передаём элементы фильтра
+    searchBySeller: indexes.sellers                                    // для элемента с именем searchBySeller устанавливаем массив продавцов
+});
+
 // @todo: инициализация сортировки
 const applySorting = initSorting([                  // Нам нужно передать сюда массив элементов, которые вызывают сортировку, чтобы изменять их визуальное представление
     sampleTable.header.elements.sortByDate,
     sampleTable.header.elements.sortByTotal
 ]);
-
-// @todo: инициализация фильтрации
-const applyFiltering = initFiltering(sampleTable.filter.elements, {    // передаём элементы фильтра
-    searchBySeller: indexes.sellers                                    // для элемента с именем searchBySeller устанавливаем массив продавцов
-});
 
 const appRoot = document.querySelector('#app');
 appRoot.appendChild(sampleTable.container);
