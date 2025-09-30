@@ -12,12 +12,55 @@ export function initTable(settings, onAction) {
     const root = cloneTemplate(tableTemplate);
 
     // @todo: #1.2 —  вывести дополнительные шаблоны до и после таблицы
+    // Добавляем блоки НАД таблицей (в обратном порядке)
+	before.reverse().forEach(templateName => {
+		root[templateName] = cloneTemplate(templateName);
+		root.container.prepend(root[templateName].container);
+	});
 
-    // @todo: #1.3 —  обработать события и вызвать onAction()
+	// Добавляем блоки ПОД таблицей (в прямом порядке)
+	after.forEach(templateName => {
+		root[templateName] = cloneTemplate(templateName);
+		root.container.append(root[templateName].container);
+	});
+
+    // @todo: #1.3 — обработать события и вызвать onAction()
+	// Обработчик изменений в полях формы
+	root.container.addEventListener('change', () => {
+		onAction(); // Без аргументов
+	});
+
+	// Обработчик сброса формы
+	root.container.addEventListener('reset', () => {
+		setTimeout``(onAction); // С задержкой
+	});
+
+	// Обработчик отправки формы
+	root.container.addEventListener('submit', (e) => {
+		e.preventDefault(); // Отменяем перезагрузку страницы
+		onAction(e.submitter); // Передаем конкретную кнопку
+	});
 
     const render = (data) => {
         // @todo: #1.1 — преобразовать данные в массив строк на основе шаблона rowTemplate
-        const nextRows = [];
+        // Трансформируем данные в строки
+        const nextRows = data.map(item => {
+            // 1. Клонируем шаблон строки
+            const row = cloneTemplate(rowTemplate);
+
+            // 2. Перебор по ключам данных
+            Object.keys(item).forEach(key => {
+                // Проверяем, существует ли key в row.elements
+                if (row.elements[key]) {
+                    row.elements[key].textContent = item[key];
+                }
+            });
+
+            // 3. Возвращаем готовую строку
+            return row.container;
+        });
+
+        // Заменяем старые строки на новые
         root.elements.rows.replaceChildren(...nextRows);
     }
 
